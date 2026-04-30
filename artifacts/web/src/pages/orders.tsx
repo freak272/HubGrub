@@ -38,7 +38,7 @@ function OrdersContent() {
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
 
   const { data: orders, isLoading: ordersLoading } = useListOrders({
-    query: { queryKey: getListOrdersQueryKey() },
+    query: { queryKey: getListOrdersQueryKey(), refetchInterval: 3000 },
   });
   const { data: products } = useListProducts({
     query: { queryKey: getListProductsQueryKey() },
@@ -114,9 +114,15 @@ function OrdersContent() {
         <div className="flex items-center gap-3">
           <Tv2 className="h-7 w-7 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Live Orders</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">Live Orders</h1>
+              <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Live
+              </span>
+            </div>
             <p className="text-muted-foreground text-sm mt-0.5">
-              {orders?.length ?? 0} order{orders?.length !== 1 ? "s" : ""} total
+              {orders?.length ?? 0} order{orders?.length !== 1 ? "s" : ""} · refreshes every 3s
             </p>
           </div>
         </div>
