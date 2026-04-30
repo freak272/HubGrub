@@ -113,6 +113,30 @@ export const store = {
     return { order };
   },
 
+  createFreetextOrder(input: { customer?: string; items: string[] }): Order {
+    const orderItems: OrderItem[] = input.items
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((item) => ({
+        productId: "freetext-" + newId(),
+        name: item,
+        price: 0,
+        quantity: 1,
+      }));
+
+    const order: Order = {
+      id: newId(),
+      customer: (input.customer ?? "Guest").trim() || "Guest",
+      items: orderItems,
+      total: 0,
+      status: "NEW",
+      createdAt: new Date().toISOString(),
+    };
+
+    this.orders.unshift(order);
+    return order;
+  },
+
   advanceOrder(id: string): Order | null {
     const o = this.orders.find((x) => x.id === id);
     if (!o) return null;

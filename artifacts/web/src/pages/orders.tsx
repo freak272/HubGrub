@@ -100,11 +100,11 @@ function OrdersContent() {
     });
   };
 
-  const formatItems = (items: Array<{ productId: string; quantity: number }>) =>
+  const formatItems = (items: Array<{ productId: string; quantity: number; name?: string }>) =>
     items
-      .map(({ productId, quantity }) => {
-        const name = productMap[productId]?.name ?? productId;
-        return quantity > 1 ? `${name} ×${quantity}` : name;
+      .map(({ productId, quantity, name }) => {
+        const display = name || productMap[productId]?.name || productId;
+        return quantity > 1 ? `${display} ×${quantity}` : display;
       })
       .join(", ");
 
