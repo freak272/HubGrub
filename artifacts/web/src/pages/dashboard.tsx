@@ -3,9 +3,9 @@ import { Package, ShoppingCart, DollarSign, Layers } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
+import { AdminLock } from "@/components/AdminLock";
 
-export default function Dashboard() {
+function DashboardContent() {
   const { data: stats, isLoading } = useGetDashboardStats({ query: { queryKey: getGetDashboardStatsQueryKey() } });
 
   return (
@@ -102,5 +102,13 @@ export default function Dashboard() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <AdminLock>
+      <DashboardContent />
+    </AdminLock>
   );
 }

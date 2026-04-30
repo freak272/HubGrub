@@ -6,6 +6,7 @@ import {
   useDeleteProduct 
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { AdminLock } from "@/components/AdminLock";
 import { Plus, Trash2, Search, PackageOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ const productSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
 });
 
-export default function Inventory() {
+function InventoryContent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -286,5 +287,13 @@ export default function Inventory() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Inventory() {
+  return (
+    <AdminLock>
+      <InventoryContent />
+    </AdminLock>
   );
 }

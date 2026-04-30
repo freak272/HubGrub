@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { store } from "../lib/store";
 import { CreateOrderBody, AdvanceOrderParams } from "@workspace/api-zod";
+import { requireAdminKey } from "../lib/adminAuth";
 
 const router = Router();
 
-router.get("/orders", (_req, res) => {
+router.get("/orders", requireAdminKey, (_req, res) => {
   res.json(store.orders);
 });
 
@@ -22,7 +23,7 @@ router.post("/orders", (req, res) => {
   res.status(201).json(order);
 });
 
-router.post("/orders/:id/advance", (req, res) => {
+router.post("/orders/:id/advance", requireAdminKey, (req, res) => {
   const { id } = AdvanceOrderParams.parse(req.params);
   const order = store.advanceOrder(id);
   if (!order) {

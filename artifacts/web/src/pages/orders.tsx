@@ -7,6 +7,7 @@ import {
   useListProducts,
   getListProductsQueryKey
 } from "@workspace/api-client-react";
+import { AdminLock } from "@/components/AdminLock";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowRight, Package, Clock, Truck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function Orders() {
+function OrdersContent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -249,5 +250,13 @@ export default function Orders() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Orders() {
+  return (
+    <AdminLock>
+      <OrdersContent />
+    </AdminLock>
   );
 }
