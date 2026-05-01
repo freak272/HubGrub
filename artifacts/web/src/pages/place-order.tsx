@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useListProducts, getListProductsQueryKey, getListOrdersQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { ShoppingBag, CheckCircle2, PenLine, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,15 @@ export default function PlaceOrder() {
 
   const { data: products, isLoading } = useListProducts({
     query: { queryKey: getListProductsQueryKey() },
+  });
+
+  const { data: bizProfile } = useQuery({
+    queryKey: ["business-profile"],
+    queryFn: () => fetch("/api/business-profile").then((r) => r.json()) as Promise<{
+      type: "restaurant" | "shop" | "service" | null;
+      subtype: "fastfood" | "cafe" | "pizza" | null;
+      name: string;
+    }>,
   });
 
   const updateQuantity = (productId: string, delta: number, maxStock: number) => {
@@ -148,7 +157,15 @@ export default function PlaceOrder() {
       <div>
         <div className="flex items-center gap-3 mb-1">
           <ShoppingBag className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Place an Order</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {bizProfile?.type === "restaurant"
+              ? `🍽️ Welcome to our ${bizProfile.subtype === "fastfood" ? "fast food" : bizProfile.subtype === "cafe" ? "café" : bizProfile.subtype === "pizza" ? "pizza" : ""} restaurant`
+              : bizProfile?.type === "shop"
+              ? "🛍️ Welcome to our store"
+              : bizProfile?.type === "service"
+              ? "🔧 Welcome to our service"
+              : bizProfile?.name ?? "Place an Order"}
+          </h1>
         </div>
         <p className="text-muted-foreground">Type what you'd like, or browse available products below.</p>
       </div>

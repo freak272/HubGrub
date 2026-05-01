@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   LogOut,
   RefreshCw,
+  Settings2,
 } from "lucide-react";
 import { useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
 import { useAdminKey } from "@/contexts/AdminKeyContext";
@@ -22,6 +23,7 @@ const businessNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/orders", label: "Live Orders", icon: ShoppingCart },
+  { href: "/setup-business", label: "Setup", icon: Settings2 },
 ];
 
 const customerNavItems = [

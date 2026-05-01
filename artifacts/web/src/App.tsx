@@ -11,6 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Orders from "@/pages/orders";
 import PlaceOrder from "@/pages/place-order";
+import SetupBusiness from "@/pages/setup-business";
 import type { ComponentType } from "react";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,9 @@ function Router() {
         </Route>
         <Route path="/orders">
           <BusinessRoute component={Orders} />
+        </Route>
+        <Route path="/setup-business">
+          <BusinessRoute component={SetupBusiness} />
         </Route>
         <Route component={NotFound} />
       </Switch>

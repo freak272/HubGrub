@@ -30,9 +30,23 @@ function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+export type BusinessType = "restaurant" | "shop" | "service" | null;
+export type BusinessSubtype = "fastfood" | "cafe" | "pizza" | null;
+
+export type BusinessProfile = {
+  type: BusinessType;
+  subtype: BusinessSubtype;
+  name: string;
+};
+
 export const store = {
   products: [] as Product[],
   orders: [] as Order[],
+  businessProfile: {
+    type: null,
+    subtype: null,
+    name: "My Business",
+  } as BusinessProfile,
 
   addProduct(input: {
     name: string;
