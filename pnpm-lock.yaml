@@ -156,6 +156,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
     devDependencies:
       prettier:
         specifier: ^3.8.1
