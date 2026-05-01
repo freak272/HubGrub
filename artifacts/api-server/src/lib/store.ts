@@ -19,6 +19,7 @@ export type OrderItem = {
 export type Order = {
   id: string;
   customer: string;
+  phone?: string;
   items: OrderItem[];
   total: number;
   status: OrderStatus;
@@ -113,7 +114,7 @@ export const store = {
     return { order };
   },
 
-  createFreetextOrder(input: { customer?: string; items: string[] }): Order {
+  createFreetextOrder(input: { customer?: string; phone?: string; items: string[] }): Order {
     const orderItems: OrderItem[] = input.items
       .map((s) => s.trim())
       .filter(Boolean)
@@ -127,6 +128,7 @@ export const store = {
     const order: Order = {
       id: newId(),
       customer: (input.customer ?? "Guest").trim() || "Guest",
+      phone: input.phone?.trim() || undefined,
       items: orderItems,
       total: 0,
       status: "NEW",

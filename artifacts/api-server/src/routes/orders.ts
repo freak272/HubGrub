@@ -12,6 +12,7 @@ router.get("/orders", requireAdminKey, (_req, res) => {
 router.post("/order-form", (req, res) => {
   const rawItems = req.body.items;
   const customer = req.body.customer;
+  const phone = req.body.phone;
 
   if (!rawItems || typeof rawItems !== "string") {
     res.status(400).json({ error: "items is required (comma-separated text)" });
@@ -30,6 +31,7 @@ router.post("/order-form", (req, res) => {
 
   const order = store.createFreetextOrder({
     customer: typeof customer === "string" ? customer : undefined,
+    phone: typeof phone === "string" ? phone : undefined,
     items: parsed,
   });
 

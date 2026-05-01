@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminKeyProvider } from "@/contexts/AdminKeyContext";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Orders from "@/pages/orders";
@@ -16,7 +17,8 @@ function Router() {
   return (
     <AppLayout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={Landing} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/orders" component={Orders} />
         <Route path="/place-order" component={PlaceOrder} />

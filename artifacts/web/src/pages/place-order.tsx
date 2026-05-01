@@ -16,6 +16,7 @@ export default function PlaceOrder() {
   const { toast } = useToast();
   const [mode, setMode] = useState<Mode>("type");
   const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
   const [itemsText, setItemsText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -56,6 +57,7 @@ export default function PlaceOrder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: customerName.trim() || "Guest",
+          phone: phone.trim() || undefined,
           items: trimmed,
         }),
       });
@@ -117,6 +119,7 @@ export default function PlaceOrder() {
     setItemsText("");
     setSelectedItems({});
     setCustomerName("");
+    setPhone("");
   };
 
   if (submitted) {
@@ -150,15 +153,26 @@ export default function PlaceOrder() {
         <p className="text-muted-foreground">Type what you'd like, or browse available products below.</p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="customer">Your Name</Label>
-        <Input
-          id="customer"
-          placeholder="Optional"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          className="max-w-xs"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="customer">Your Name</Label>
+          <Input
+            id="customer"
+            placeholder="Optional"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="e.g. 555-1234"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="flex border rounded-lg overflow-hidden">

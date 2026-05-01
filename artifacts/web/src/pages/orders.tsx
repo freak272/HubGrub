@@ -238,6 +238,11 @@ function OrdersContent() {
                       Order #{index + 1}
                     </span>
                     <div className="font-semibold mt-0.5">{order.customer || "Guest"}</div>
+                    {(order as unknown as { phone?: string }).phone && (
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        📞 {(order as unknown as { phone?: string }).phone}
+                      </div>
+                    )}
                   </div>
                   <div
                     className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border ${cfg.border} ${cfg.color} bg-white`}
