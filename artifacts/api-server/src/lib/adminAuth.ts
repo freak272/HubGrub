@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 
-const ADMIN_KEY = process.env.ADMIN_KEY ?? "mysecret123";
+export const ADMIN_KEY = process.env.ADMIN_KEY ?? "mysecret123";
 
 export function requireAdminKey(req: Request, res: Response, next: NextFunction): void {
   const key =
