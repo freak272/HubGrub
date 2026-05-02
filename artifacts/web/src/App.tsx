@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { RoleProvider, useRole } from "@/contexts/RoleContext";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import Orders from "@/pages/orders";
@@ -35,6 +36,7 @@ function Router() {
     <AppLayout>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/login/:role" component={Login} />
         <Route path="/place-order">
           <CustomerRoute component={PlaceOrder} />
         </Route>
