@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useListProducts, getListProductsQueryKey, getListOrdersQueryKey } from "@workspace/api-client-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { ShoppingBag, CheckCircle2, PenLine, Package } from "lucide-react";
+import { ShoppingBag, CheckCircle2, PenLine, Package, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Mode = "type" | "browse";
 
 export default function PlaceOrder() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { customer } = useAuth();
+
   const [mode, setMode] = useState<Mode>("type");
-  const [customerName, setCustomerName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [customerName, setCustomerName] = useState(customer?.name ?? "");
+  const [phone, setPhone] = useState(customer?.phone ?? "");
   const [itemsText, setItemsText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -127,8 +130,6 @@ export default function PlaceOrder() {
     setSubmitted(false);
     setItemsText("");
     setSelectedItems({});
-    setCustomerName("");
-    setPhone("");
   };
 
   if (submitted) {
@@ -144,6 +145,12 @@ export default function PlaceOrder() {
           <p className="text-muted-foreground text-sm">
             Thank you{customerName ? `, ${customerName}` : ""}! We'll process your order shortly.
           </p>
+          {phone && (
+            <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+              <Phone size={14} />
+              We'll notify you on {phone}
+            </div>
+          )}
           <Button variant="outline" onClick={reset}>
             Place Another Order
           </Button>
@@ -152,20 +159,20 @@ export default function PlaceOrder() {
     );
   }
 
+  const greeting = bizProfile?.type === "restaurant"
+    ? `🍽️ Welcome to our ${bizProfile.subtype === "fastfood" ? "fast food" : bizProfile.subtype === "cafe" ? "café" : bizProfile.subtype === "pizza" ? "pizza" : ""} restaurant`
+    : bizProfile?.type === "shop"
+    ? "🛍️ Welcome to our store"
+    : bizProfile?.type === "service"
+    ? "🔧 Welcome to our service"
+    : bizProfile?.name ?? "Place an Order";
+
   return (
     <div className="p-8 max-w-2xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-3 mb-1">
           <ShoppingBag className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">
-            {bizProfile?.type === "restaurant"
-              ? `🍽️ Welcome to our ${bizProfile.subtype === "fastfood" ? "fast food" : bizProfile.subtype === "cafe" ? "café" : bizProfile.subtype === "pizza" ? "pizza" : ""} restaurant`
-              : bizProfile?.type === "shop"
-              ? "🛍️ Welcome to our store"
-              : bizProfile?.type === "service"
-              ? "🔧 Welcome to our service"
-              : bizProfile?.name ?? "Place an Order"}
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">{greeting}</h1>
         </div>
         <p className="text-muted-foreground">Type what you'd like, or browse available products below.</p>
       </div>
@@ -185,7 +192,7 @@ export default function PlaceOrder() {
           <Input
             id="phone"
             type="tel"
-            placeholder="e.g. 555-1234"
+            placeholder="e.g. +27 82 123 4567"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />

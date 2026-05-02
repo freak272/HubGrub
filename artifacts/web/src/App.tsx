@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminKeyProvider } from "@/contexts/AdminKeyContext";
 import { RoleProvider, useRole } from "@/contexts/RoleContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
 import Landing from "@/pages/landing";
@@ -62,14 +63,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <RoleProvider>
-          <AdminKeyProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
-            </WouterRouter>
-            <Toaster />
-          </AdminKeyProvider>
-        </RoleProvider>
+        <AuthProvider>
+          <RoleProvider>
+            <AdminKeyProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </AdminKeyProvider>
+          </RoleProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
