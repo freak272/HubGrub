@@ -59,7 +59,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <main className="flex-1 overflow-auto flex flex-col">{children}</main>;
   }
 
-  return <AppSidebar location={location} navigate={navigate} health={health?.status === "ok"} isUnlocked={isUnlocked} lock={lock} role={role} clearRole={clearRole} customer={customer} logout={logout} />;
+  return <AppSidebar children={children} location={location} navigate={navigate} health={health?.status === "ok"} isUnlocked={isUnlocked} lock={lock} role={role} clearRole={clearRole} customer={customer} logout={logout} />;
 }
 
 function AppSidebar({
@@ -82,18 +82,18 @@ function AppSidebar({
   lock: () => void;
   role: "customer" | "business" | null;
   clearRole: () => void;
-  customer: { name: string | null; phone: string | null } | null;
+  customer: { name: string | null; phone?: string | null } | null;
   logout: () => void;
 }) {
   const business = useBusiness();
-  const { businessCode, isDefaultBusiness, setBusinessCode } = business;
-  const safeBusinessCode = businessCode ?? "DEFAULT";
+  const { activeBusinessCode, isDefaultBusiness, setActiveBusinessCode } = business;
+  const safeBusinessCode = activeBusinessCode ?? "DEFAULT";
   const profileUrl = isDefaultBusiness ? "/api/business-profile" : `/api/b/${safeBusinessCode}/profile`;
 
   const { data: bizProfile } = useQuery<BizProfile>({
     queryKey: ["biz-profile-sidebar", safeBusinessCode],
     queryFn: () => fetch(profileUrl).then((r) => r.json()),
-    enabled: !!role && (role !== "customer" || isDefaultBusiness || !!businessCode),
+    enabled: !!role && (role !== "customer" || isDefaultBusiness || !!activeBusinessCode),
   });
 
   const theme = useBusinessTheme(bizProfile);
@@ -102,7 +102,7 @@ function AppSidebar({
     logout();
     clearRole();
     lock();
-    setBusinessCode(null);
+    setActiveBusinessCode(null);
     navigate("/");
   };
 
@@ -144,11 +144,11 @@ function AppSidebar({
           </div>
         )}
 
-        {role === "customer" && !isDefaultBusiness && businessCode && (
+        {role === "customer" && !isDefaultBusiness && activeBusinessCode && (
           <div className="px-4 pt-2">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs" style={theme.accentStyle}>
               <span>{theme.emoji}</span>
-              <span className="font-medium">{bizProfile?.name ?? businessCode}</span>
+              <span className="font-medium">{bizProfile?.name ?? activeBusinessCode}</span>
             </div>
           </div>
         )}
