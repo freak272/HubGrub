@@ -16,6 +16,7 @@ import Orders from "@/pages/orders";
 import PlaceOrder from "@/pages/place-order";
 import SetupBusiness from "@/pages/setup-business";
 import MyOrders from "@/pages/my-orders";
+import CustomerHome from "@/pages/customer-home";
 import type { ComponentType } from "react";
 
 const queryClient = new QueryClient();
@@ -30,7 +31,7 @@ function CustomerRoute({ component: Component }: { component: ComponentType }) {
 function BusinessRoute({ component: Component }: { component: ComponentType }) {
   const { role } = useRole();
   if (!role) return <Redirect to="/" />;
-  if (role === "customer") return <Redirect to="/place-order" />;
+  if (role === "customer") return <Redirect to="/customer/home" />;
   return <Component />;
 }
 
@@ -40,6 +41,9 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login/:role" component={Login} />
+        <Route path="/customer/home">
+          <CustomerRoute component={CustomerHome} />
+        </Route>
         <Route path="/place-order">
           <CustomerRoute component={PlaceOrder} />
         </Route>
@@ -72,7 +76,7 @@ function App() {
           <AuthProvider>
             <RoleProvider>
               <AdminKeyProvider>
-                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "") }>
                   <Router />
                 </WouterRouter>
                 <Toaster />

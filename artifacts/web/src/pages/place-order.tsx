@@ -34,7 +34,7 @@ export default function PlaceOrder() {
 
   const [mode, setMode] = useState<Mode>("type");
   const [customerName, setCustomerName] = useState(customer?.name ?? "");
-  const [contact, setContact] = useState(customer?.phone ?? "");
+  const [contact, setContact] = useState(customer?.contact ?? "");
   const [contactMethod, setContactMethod] = useState<"phone" | "email">("phone");
   const [itemsText, setItemsText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
@@ -142,22 +142,12 @@ export default function PlaceOrder() {
               </div>
             )}
             <div className="flex flex-col gap-2">
-              {canTrack ? (
-                <Button onClick={reset} style={theme.buttonStyle}>
-                  Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
-                </Button>
-              ) : (
-                <Button onClick={reset} style={theme.buttonStyle}>
-                  Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
-                </Button>
-              )}
-              {canTrack && (
-                <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>
-              )}
+              <Button onClick={reset} style={theme.buttonStyle}>
+                Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
+              </Button>
+              {canTrack && <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>}
+              {!canTrack && <p className="text-xs text-muted-foreground">This business has turned off live tracking, but you can still check when your order is ready in My Orders.</p>}
             </div>
-            {!canTrack && (
-              <p className="text-xs text-muted-foreground">This business has turned off live tracking, but your order will still show as ready when it’s prepared.</p>
-            )}
           </div>
         </div>
       </div>

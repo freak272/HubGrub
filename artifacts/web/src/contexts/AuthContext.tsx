@@ -2,12 +2,12 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type CustomerProfile = {
   name: string;
-  phone: string;
+  contact: string;
 };
 
 interface AuthContextValue {
   customer: CustomerProfile | null;
-  loginCustomer: (name: string, phone: string) => void;
+  loginCustomer: (name: string, contact: string) => void;
   logout: () => void;
 }
 
@@ -25,8 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const loginCustomer = (name: string, phone: string) => {
-    const profile: CustomerProfile = { name: name.trim() || "Guest", phone: phone.trim() };
+  const loginCustomer = (name: string, contact: string) => {
+    const profile: CustomerProfile = { name: name.trim() || "Guest", contact: contact.trim() };
     setCustomer(profile);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   };

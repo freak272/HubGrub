@@ -37,11 +37,7 @@ export default function Login() {
   const { loginCustomer } = useAuth();
   const { businessCode, isDefaultBusiness } = useBusiness();
 
-  // Fetch business profile for branding when arriving from a business selection
-  const profileUrl = roleParam === "customer"
-    ? (isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`)
-    : null;
-
+  const profileUrl = roleParam === "customer" ? (isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`) : null;
   const { data: bizProfile } = useQuery<BizProfile>({
     queryKey: ["biz-profile-login", businessCode],
     queryFn: () => fetch(profileUrl!).then((r) => r.json()),
@@ -51,7 +47,7 @@ export default function Login() {
   const theme = useBusinessTheme(bizProfile ?? null);
 
   useEffect(() => {
-    if (role === "customer") navigate("/place-order");
+    if (role === "customer") navigate("/customer/home");
     if (role === "business") navigate("/dashboard");
   }, [role, navigate]);
 
@@ -62,7 +58,7 @@ export default function Login() {
     }
     loginCustomer(name, contact);
     setRole("customer");
-    navigate("/place-order");
+    navigate("/customer/home");
   };
 
   const handleBusinessLogin = async () => {
@@ -93,25 +89,19 @@ export default function Login() {
   const hasBizBranding = roleParam === "customer" && bizProfile && bizProfile.name;
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-8"
-      style={hasBizBranding ? theme.bgLight ? { background: theme.bgLight } : {} : {}}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-center p-8" style={hasBizBranding ? (theme.bgLight ? { background: theme.bgLight } : {}) : {}}>
       <div className="w-full max-w-md">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft size={14} /> Back to selection
         </Link>
 
-        {/* Business branding banner */}
         {hasBizBranding && (
           <div className="rounded-2xl border mb-4 overflow-hidden" style={theme.heroStyle}>
             <div className="px-6 py-4 flex items-center gap-4">
               <span className="text-3xl">{theme.emoji}</span>
               <div>
                 <div className="font-bold text-lg">{bizProfile?.name}</div>
-                {bizProfile?.description && (
-                  <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{bizProfile.description}</div>
-                )}
+                {bizProfile?.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{bizProfile.description}</div>}
                 <div className="text-xs text-muted-foreground mt-0.5">{theme.orderPrompt}</div>
               </div>
             </div>
@@ -120,17 +110,10 @@ export default function Login() {
 
         <div className="rounded-2xl border bg-card p-8 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <div
-              className="mx-auto h-14 w-14 rounded-full flex items-center justify-center"
-              style={hasBizBranding ? theme.accentStyle : { background: "hsl(var(--primary) / 0.1)" }}
-            >
-              {roleParam === "customer"
-                ? <ShoppingBag className="h-7 w-7" style={hasBizBranding ? {} : { color: "hsl(var(--primary))" }} />
-                : <Store className="h-7 w-7 text-primary" />}
+            <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center" style={hasBizBranding ? theme.accentStyle : { background: "hsl(var(--primary) / 0.1)" }}>
+              {roleParam === "customer" ? <ShoppingBag className="h-7 w-7" style={hasBizBranding ? {} : { color: "hsl(var(--primary))" }} /> : <Store className="h-7 w-7 text-primary" />}
             </div>
-            <h1 className="text-2xl font-bold">
-              {roleParam === "customer" ? "Start Ordering" : "Business Sign In"}
-            </h1>
+            <h1 className="text-2xl font-bold">{roleParam === "customer" ? "Start Ordering" : "Business Sign In"}</h1>
             <p className="text-sm text-muted-foreground">
               {roleParam === "customer"
                 ? hasBizBranding
@@ -151,18 +134,10 @@ export default function Login() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Your Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Jane Smith"
-                  onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()}
-                />
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Jane Smith" onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact">
-                  Contact Details <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="contact">Contact Details <span className="text-destructive">*</span></Label>
                 <div className="flex gap-2">
                   <Input
                     id="contact"
@@ -173,55 +148,25 @@ export default function Login() {
                     onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()}
                     className="flex-1"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => { setContactMethod((m) => m === "phone" ? "email" : "phone"); setContact(""); setError(""); }}
-                    title={contactMethod === "phone" ? "Switch to email" : "Switch to phone"}
-                  >
+                  <Button type="button" variant="outline" onClick={() => { setContactMethod((m) => (m === "phone" ? "email" : "phone")); setContact(""); setError(""); }} title={contactMethod === "phone" ? "Switch to email" : "Switch to phone"}>
                     {contactMethod === "phone" ? <Mail size={16} /> : <Phone size={16} />}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {contactMethod === "phone"
-                    ? "Used to look up your orders later. No spam."
-                    : "Used to look up your orders later. No spam."}
-                  {" "}<button type="button" className="underline hover:text-foreground" onClick={() => setContactMethod((m) => m === "phone" ? "email" : "phone")}>
-                    Use {contactMethod === "phone" ? "email" : "phone"} instead
-                  </button>
-                </p>
+                <p className="text-xs text-muted-foreground">Used to look up your orders later. No spam.</p>
               </div>
-              <Button
-                className="w-full"
-                onClick={handleCustomerLogin}
-                disabled={!contact.trim()}
-                style={hasBizBranding ? theme.buttonStyle : {}}
-              >
+              <Button className="w-full" onClick={handleCustomerLogin} disabled={!contact.trim()} style={hasBizBranding ? theme.buttonStyle : {}}>
                 {hasBizBranding ? theme.orderVerb : "Start Ordering"} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="key">
-                  Business Key <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="key"
-                  type="password"
-                  value={businessKey}
-                  onChange={(e) => { setBusinessKey(e.target.value); setError(""); }}
-                  placeholder="Enter your business key"
-                  onKeyDown={(e) => e.key === "Enter" && handleBusinessLogin()}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Default key: <code className="bg-muted px-1 py-0.5 rounded text-xs">mysecret123</code>
-                </p>
+                <Label htmlFor="key">Business Key <span className="text-destructive">*</span></Label>
+                <Input id="key" type="password" value={businessKey} onChange={(e) => { setBusinessKey(e.target.value); setError(""); }} placeholder="Enter your business key" onKeyDown={(e) => e.key === "Enter" && handleBusinessLogin()} />
+                <p className="text-xs text-muted-foreground">Default key: <code className="bg-muted px-1 py-0.5 rounded text-xs">mysecret123</code></p>
               </div>
               <Button className="w-full" onClick={handleBusinessLogin} disabled={isPending || !businessKey.trim()}>
-                {isPending ? "Verifying..." : (
-                  <><ShieldCheck className="mr-2 h-4 w-4" /> Access Dashboard</>
-                )}
+                {isPending ? "Verifying..." : (<><ShieldCheck className="mr-2 h-4 w-4" /> Access Dashboard</>)}
               </Button>
             </div>
           )}

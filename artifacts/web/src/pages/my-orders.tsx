@@ -32,12 +32,16 @@ function isEmail(value: string) {
   return value.includes("@");
 }
 
+function isReadyStatus(status: string) {
+  return status === "PACKED" || status === "SHIPPED" || status === "DELIVERED";
+}
+
 export default function MyOrders() {
   const { customer } = useAuth();
   const { businessCode, isDefaultBusiness } = useBusiness();
-  const [contact, setContact] = useState(customer?.phone ?? "");
-  const [searchContact, setSearchContact] = useState(customer?.phone ?? "");
-  const [searched, setSearched] = useState(!!customer?.phone);
+  const [contact, setContact] = useState(customer?.contact ?? "");
+  const [searchContact, setSearchContact] = useState(customer?.contact ?? "");
+  const [searched, setSearched] = useState(!!customer?.contact);
 
   const profileUrl = isDefaultBusiness
     ? "/api/business-profile"
@@ -122,7 +126,7 @@ export default function MyOrders() {
               <>
                 <p className="text-sm text-muted-foreground font-medium">{orders.length} order{orders.length !== 1 ? "s" : ""} found</p>
                 {orders.map((order) => {
-                  const isReady = order.status === "PACKED" || order.status === "SHIPPED" || order.status === "DELIVERED";
+                  const ready = isReadyStatus(order.status);
                   const statusInfo = theme.statusFlow[order.status] ?? { label: order.status, color: "#6b7280" };
                   return (
                     <div key={order.id} className="rounded-2xl border bg-white shadow-sm overflow-hidden">
@@ -155,8 +159,8 @@ export default function MyOrders() {
                       <div className="px-5 py-4 border-t space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium">Ready status</span>
-                          <span className={isReady ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
-                            {isReady ? "Ready for pickup" : "Not ready yet"}
+                          <span className={ready ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
+                            {ready ? "Ready for pickup" : "Not ready yet"}
                           </span>
                         </div>
                         {canTrack ? (
