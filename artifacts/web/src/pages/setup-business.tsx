@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings2, Save, CheckCircle2, Link2, Copy, Palette, QrCode } from "lucide-react";
+import { Settings2, Save, CheckCircle2, Link2, Copy, Palette, QrCode, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,7 @@ function SetupForm() {
   const [themeColor, setThemeColor] = useState("amber");
   const [emoji, setEmoji] = useState("");
   const [bizCode, setBizCode] = useState("MAIN01");
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
@@ -61,6 +62,7 @@ function SetupForm() {
         setThemeColor(data.themeColor ?? "amber");
         setEmoji(data.emoji ?? "");
         setBizCode(data.code ?? "MAIN01");
+        setTrackingEnabled(Boolean(data.trackingEnabled));
       })
       .catch(() => {});
   }, [adminKey]);
@@ -72,7 +74,7 @@ function SetupForm() {
       const res = await fetch("/api/setup-business", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey ?? "" },
-        body: JSON.stringify({ type: type || null, subtype: subtype || null, name, description, themeColor, emoji }),
+        body: JSON.stringify({ type: type || null, subtype: subtype || null, name, description, themeColor, emoji, trackingEnabled }),
       });
       if (!res.ok) throw new Error("Failed to save");
       setSaved(true);
@@ -215,6 +217,20 @@ function SetupForm() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Bell size={16} />
+            <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Order Tracking</h2>
+          </div>
+          <label className="flex items-start gap-3 p-4 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors">
+            <input type="checkbox" checked={trackingEnabled} onChange={(e) => setTrackingEnabled(e.target.checked)} className="mt-1 h-4 w-4" />
+            <div>
+              <div className="font-medium text-sm">Allow customers to track orders</div>
+              <p className="text-xs text-muted-foreground mt-1">If enabled, customers can follow order progress from placed to ready. They will still always see whether the order is ready.</p>
+            </div>
+          </label>
         </div>
 
         <div className="rounded-xl border bg-card p-5 space-y-3">

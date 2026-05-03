@@ -30,15 +30,10 @@ function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-// Match a stored contact value (phone or email) against a search term
 function matchContact(stored: string | undefined, search: string): boolean {
   if (!stored || !search) return false;
   const s = search.trim();
-  if (s.includes("@")) {
-    // Email match — case-insensitive exact match
-    return stored.toLowerCase() === s.toLowerCase();
-  }
-  // Phone match — normalize digits and check substring
+  if (s.includes("@")) return stored.toLowerCase() === s.toLowerCase();
   const normalize = (v: string) => v.replace(/\D/g, "");
   return normalize(stored).includes(normalize(s));
 }
@@ -53,6 +48,7 @@ export type BusinessProfile = {
   description?: string;
   themeColor?: string;
   emoji?: string;
+  trackingEnabled?: boolean;
 };
 
 export type BusinessData = {
@@ -77,16 +73,16 @@ function makeBusinessStore(code: string, adminKey: string, profile: BusinessProf
 export const store = {
   businesses: new Map<string, BusinessData>(),
 
-  // ── backward-compat: the "default" business (uses ADMIN_KEY from env) ──
   get _default(): BusinessData {
     const key = process.env.ADMIN_KEY ?? "mysecret123";
     let biz = this.businesses.get("DEFAULT");
     if (!biz) {
       const code = "MAIN01";
-      biz = makeBusinessStore(code, key, { type: null, subtype: null, name: "My Business" });
+      biz = makeBusinessStore(code, key, { type: null, subtype: null, name: "My Business", trackingEnabled: true });
       this.businesses.set("DEFAULT", biz);
       this.businesses.set(code, biz);
     }
+    if (biz.profile.trackingEnabled === undefined) biz.profile.trackingEnabled = true;
     return biz;
   },
 
@@ -94,7 +90,6 @@ export const store = {
   get orders(): Order[] { return this._default.orders; },
   get businessProfile(): BusinessProfile { return this._default.profile; },
 
-  // ── Multi-tenant business registry ──
   registerBusiness(adminKey: string, profile?: Partial<BusinessProfile>): BusinessData {
     let code: string;
     do { code = generateCode(); } while (this.businesses.has(code));
@@ -105,6 +100,7 @@ export const store = {
       description: profile?.description,
       themeColor: profile?.themeColor,
       emoji: profile?.emoji,
+      trackingEnabled: profile?.trackingEnabled ?? false,
     });
     this.businesses.set(code, data);
     return data;
@@ -114,7 +110,6 @@ export const store = {
     return this.businesses.get(code.toUpperCase()) ?? null;
   },
 
-  // ── Default business methods (backward compat) ──
   addProduct(input: { name: string; price: number; stock?: number; sku?: string }): Product {
     return this._addProductTo(this._default.products, input);
   },
@@ -139,7 +134,6 @@ export const store = {
     return this._getStatsFrom(this._default.products, this._default.orders);
   },
 
-  // ── Per-business methods ──
   bizAddProduct(code: string, input: { name: string; price: number; stock?: number; sku?: string }): Product | null {
     const biz = this.getBusiness(code);
     if (!biz) return null;
@@ -186,7 +180,6 @@ export const store = {
     return this._default.orders.filter((o) => matchContact(o.phone, contact));
   },
 
-  // ── Internal helpers ──
   _addProductTo(products: Product[], input: { name: string; price: number; stock?: number; sku?: string }): Product {
     const p: Product = {
       id: newId(),
@@ -272,7 +265,6 @@ export const store = {
   },
 };
 
-// ── Seed default business products ──
 store.addProduct({ name: "Cold Brew Concentrate", price: 14.99, stock: 48, sku: "CBC-001" });
 store.addProduct({ name: "Ceramic Pour-Over Kit", price: 34.5, stock: 15, sku: "CPK-002" });
 store.addProduct({ name: "Coffee Grinder Pro", price: 89.0, stock: 8, sku: "CGP-003" });
@@ -282,8 +274,8 @@ store._default.profile.name = "The Daily Grind";
 store._default.profile.description = "Specialty coffee, pastries & pour-overs. Open 7am–7pm daily.";
 store._default.profile.themeColor = "amber";
 store._default.profile.emoji = "☕";
+store._default.profile.trackingEnabled = true;
 
-// ── Seed a second demo business: a pizza shop ──
 const pizza = store.registerBusiness("pizza123", {
   type: "restaurant",
   subtype: "pizza",
@@ -291,13 +283,13 @@ const pizza = store.registerBusiness("pizza123", {
   description: "Wood-fired Neapolitan pizza since 1987. Dine-in & takeaway.",
   themeColor: "red",
   emoji: "🍕",
+  trackingEnabled: true,
 });
 store._addProductTo(pizza.products, { name: "Margherita Pizza", price: 16.99, stock: 30, sku: "PIZ-001" });
 store._addProductTo(pizza.products, { name: "Pepperoni Pizza", price: 19.99, stock: 25, sku: "PIZ-002" });
 store._addProductTo(pizza.products, { name: "Garlic Bread", price: 5.99, stock: 50, sku: "PIZ-003" });
 store._addProductTo(pizza.products, { name: "Tiramisu", price: 7.99, stock: 20, sku: "PIZ-004" });
 
-// ── Seed a third demo business: a tech repair shop ──
 const repair = store.registerBusiness("repair123", {
   type: "service",
   subtype: null,
@@ -305,6 +297,7 @@ const repair = store.registerBusiness("repair123", {
   description: "Fast, reliable phone & laptop repairs. Most repairs done same day.",
   themeColor: "blue",
   emoji: "🔧",
+  trackingEnabled: false,
 });
 store._addProductTo(repair.products, { name: "Screen Replacement", price: 89.99, stock: 10, sku: "FIX-001" });
 store._addProductTo(repair.products, { name: "Battery Replacement", price: 49.99, stock: 15, sku: "FIX-002" });

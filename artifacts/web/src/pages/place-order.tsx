@@ -22,6 +22,7 @@ type BizProfile = {
   description?: string;
   themeColor?: string;
   emoji?: string;
+  trackingEnabled?: boolean;
 };
 
 export default function PlaceOrder() {
@@ -33,8 +34,7 @@ export default function PlaceOrder() {
 
   const [mode, setMode] = useState<Mode>("type");
   const [customerName, setCustomerName] = useState(customer?.name ?? "");
-  const [phone, setPhone] = useState(customer?.phone ?? "");
-  const [contact, setContact] = useState("");
+  const [contact, setContact] = useState(customer?.phone ?? "");
   const [contactMethod, setContactMethod] = useState<"phone" | "email">("phone");
   const [itemsText, setItemsText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
@@ -55,6 +55,8 @@ export default function PlaceOrder() {
   });
 
   const theme = useBusinessTheme(bizProfile);
+  const trackingEnabled = Boolean(bizProfile?.trackingEnabled);
+  const canTrack = trackingEnabled || bizProfile?.type === "restaurant";
 
   const updateQuantity = (productId: string, delta: number, maxStock: number) => {
     setSelectedItems((prev) => {
@@ -83,7 +85,7 @@ export default function PlaceOrder() {
       const res = await fetch(orderFormUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || phone.trim() || undefined, items: trimmed }),
+        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || undefined, items: trimmed }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Failed to place order"); }
       queryClient.invalidateQueries({ queryKey: ["products", businessCode] });
@@ -101,7 +103,7 @@ export default function PlaceOrder() {
       const res = await fetch(ordersUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || phone.trim() || undefined, items }),
+        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || undefined, items }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Failed to place order"); }
       queryClient.invalidateQueries({ queryKey: ["products", businessCode] });
@@ -140,11 +142,22 @@ export default function PlaceOrder() {
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <Button onClick={reset} style={theme.buttonStyle}>
-                Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>
+              {canTrack ? (
+                <Button onClick={reset} style={theme.buttonStyle}>
+                  Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
+                </Button>
+              ) : (
+                <Button onClick={reset} style={theme.buttonStyle}>
+                  Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
+                </Button>
+              )}
+              {canTrack && (
+                <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>
+              )}
             </div>
+            {!canTrack && (
+              <p className="text-xs text-muted-foreground">This business has turned off live tracking, but your order will still show as ready when it’s prepared.</p>
+            )}
           </div>
         </div>
       </div>

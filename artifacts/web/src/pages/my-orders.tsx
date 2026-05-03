@@ -25,6 +25,7 @@ type BizProfile = {
   description?: string;
   themeColor?: string;
   emoji?: string;
+  trackingEnabled?: boolean;
 };
 
 function isEmail(value: string) {
@@ -48,8 +49,9 @@ export default function MyOrders() {
   });
 
   const theme = useBusinessTheme(bizProfile);
+  const trackingEnabled = Boolean(bizProfile?.trackingEnabled);
+  const canTrack = trackingEnabled || bizProfile?.type === "restaurant";
 
-  // Support both phone and email lookup via the contact param
   const buildOrdersUrl = (c: string) => {
     const param = isEmail(c) ? `email=${encodeURIComponent(c)}` : `phone=${encodeURIComponent(c)}`;
     return isDefaultBusiness
@@ -73,7 +75,6 @@ export default function MyOrders() {
 
   return (
     <div className="min-h-screen" style={{ background: theme.bgLight }}>
-      {/* Hero */}
       <div className="px-8 py-10 text-center border-b" style={theme.heroStyle}>
         <div className="inline-flex h-14 w-14 rounded-full items-center justify-center text-3xl mb-4" style={theme.accentStyle}>
           {theme.emoji}
@@ -83,7 +84,6 @@ export default function MyOrders() {
       </div>
 
       <div className="max-w-xl mx-auto px-6 py-8 space-y-6">
-        {/* Contact lookup */}
         <div className="rounded-2xl border bg-white p-6 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 font-semibold">
             {looksLikeEmail ? <Mail size={16} /> : <Phone size={16} />}
@@ -108,7 +108,6 @@ export default function MyOrders() {
           </div>
         </div>
 
-        {/* Results */}
         {searched && (
           <div className="space-y-3">
             {isLoading ? (
@@ -123,6 +122,7 @@ export default function MyOrders() {
               <>
                 <p className="text-sm text-muted-foreground font-medium">{orders.length} order{orders.length !== 1 ? "s" : ""} found</p>
                 {orders.map((order) => {
+                  const isReady = order.status === "PACKED" || order.status === "SHIPPED" || order.status === "DELIVERED";
                   const statusInfo = theme.statusFlow[order.status] ?? { label: order.status, color: "#6b7280" };
                   return (
                     <div key={order.id} className="rounded-2xl border bg-white shadow-sm overflow-hidden">
@@ -151,6 +151,19 @@ export default function MyOrders() {
                             {item.price > 0 && <span className="text-muted-foreground">${(item.price * item.quantity).toFixed(2)}</span>}
                           </div>
                         ))}
+                      </div>
+                      <div className="px-5 py-4 border-t space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">Ready status</span>
+                          <span className={isReady ? "text-green-600 font-semibold" : "text-amber-600 font-semibold"}>
+                            {isReady ? "Ready for pickup" : "Not ready yet"}
+                          </span>
+                        </div>
+                        {canTrack ? (
+                          <div className="text-xs text-muted-foreground">Live tracking is enabled for this business.</div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">Live tracking is disabled for this business, but you can still see when your order is ready.</div>
+                        )}
                       </div>
                       {order.total > 0 && (
                         <div className="flex justify-between px-5 py-3 border-t text-sm font-semibold">

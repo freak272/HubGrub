@@ -11,37 +11,33 @@ function requireBizAdminKey(req: import("express").Request, res: import("express
   return true;
 }
 
-// ── Register a new business ──
 router.post("/businesses", (req, res) => {
-  const { adminKey, name, type, subtype, description, themeColor, emoji } = req.body;
+  const { adminKey, name, type, subtype, description, themeColor, emoji, trackingEnabled } = req.body;
   if (!adminKey || typeof adminKey !== "string" || adminKey.trim().length < 4) {
     res.status(400).json({ error: "adminKey must be at least 4 characters" });
     return;
   }
-  const biz = store.registerBusiness(adminKey.trim(), { name, type, subtype, description, themeColor, emoji });
+  const biz = store.registerBusiness(adminKey.trim(), { name, type, subtype, description, themeColor, emoji, trackingEnabled });
   res.status(201).json({ code: biz.code, adminKey: biz.adminKey, profile: biz.profile });
 });
 
-// ── List all business codes (public discovery) — deduplicated by code ──
 router.get("/businesses", (_req, res) => {
   const seen = new Set<string>();
   const list: object[] = [];
   for (const b of store.businesses.values()) {
     if (seen.has(b.code)) continue;
     seen.add(b.code);
-    list.push({ code: b.code, name: b.profile.name, type: b.profile.type, subtype: b.profile.subtype, emoji: b.profile.emoji });
+    list.push({ code: b.code, name: b.profile.name, type: b.profile.type, subtype: b.profile.subtype, emoji: b.profile.emoji, trackingEnabled: b.profile.trackingEnabled ?? false });
   }
   res.json(list);
 });
 
-// ── Public: get business profile ──
 router.get("/b/:code/profile", (req, res) => {
   const biz = store.getBusiness(req.params.code);
   if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
   res.json(biz.profile);
 });
 
-// ── Admin: get/update business setup ──
 router.get("/b/:code/setup", (req, res) => {
   if (!requireBizAdminKey(req, res, res.req?.next ?? (() => {}), req.params.code)) return;
   const biz = store.getBusiness(req.params.code)!;
@@ -55,25 +51,24 @@ router.post("/b/:code/setup", (req, res) => {
   const key = (req.headers["x-admin-key"] as string | undefined) ?? (req.query["key"] as string | undefined);
   if (key !== biz.adminKey) { res.status(403).json({ error: "Unauthorized" }); return; }
 
-  const { type, subtype, name, description, themeColor, emoji } = req.body;
+  const { type, subtype, name, description, themeColor, emoji, trackingEnabled } = req.body;
   if (type !== undefined) biz.profile.type = type || null;
   if (subtype !== undefined) biz.profile.subtype = subtype || null;
   if (name !== undefined) biz.profile.name = (name as string).trim() || "My Business";
   if (description !== undefined) biz.profile.description = (description as string).trim() || undefined;
   if (themeColor !== undefined) biz.profile.themeColor = themeColor || undefined;
   if (emoji !== undefined) biz.profile.emoji = emoji || undefined;
+  if (trackingEnabled !== undefined) biz.profile.trackingEnabled = Boolean(trackingEnabled);
 
   res.json(biz.profile);
 });
 
-// ── Public: list products ──
 router.get("/b/:code/products", (req, res) => {
   const biz = store.getBusiness(req.params.code);
   if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
   res.json(biz.products);
 });
 
-// ── Admin: add / delete product ──
 router.post("/b/:code/products", (req, res) => {
   const { code } = req.params;
   const biz = store.getBusiness(code);
@@ -99,7 +94,6 @@ router.delete("/b/:code/products/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Public: place order (browse) ──
 router.post("/b/:code/orders", (req, res) => {
   const { code } = req.params;
   const { customer, items } = req.body;
@@ -108,7 +102,6 @@ router.post("/b/:code/orders", (req, res) => {
   res.status(201).json(result.order);
 });
 
-// ── Public: place order (freetext) ──
 router.post("/b/:code/order-form", (req, res) => {
   const { code } = req.params;
   const { customer, phone, items: rawItems } = req.body;
@@ -128,7 +121,6 @@ router.post("/b/:code/order-form", (req, res) => {
   res.status(201).json(order);
 });
 
-// ── Admin: list all orders ──
 router.get("/b/:code/orders", (req, res) => {
   const { code } = req.params;
   const biz = store.getBusiness(code);
@@ -138,7 +130,6 @@ router.get("/b/:code/orders", (req, res) => {
   res.json(biz.orders);
 });
 
-// ── Admin: advance order ──
 router.post("/b/:code/orders/:id/advance", (req, res) => {
   const { code, id } = req.params;
   const biz = store.getBusiness(code);
@@ -150,7 +141,6 @@ router.post("/b/:code/orders/:id/advance", (req, res) => {
   res.json(order);
 });
 
-// ── Public: customer order history ──
 router.get("/b/:code/my-orders", (req, res) => {
   const { code } = req.params;
   const contact = (req.query.contact ?? req.query.phone ?? req.query.email) as string | undefined;
@@ -159,7 +149,6 @@ router.get("/b/:code/my-orders", (req, res) => {
   res.json(orders);
 });
 
-// ── Public: customer order history for default business ──
 router.get("/my-orders", (req, res) => {
   const contact = (req.query.contact ?? req.query.phone ?? req.query.email) as string | undefined;
   if (!contact) { res.status(400).json({ error: "contact (phone or email) is required" }); return; }
@@ -167,7 +156,6 @@ router.get("/my-orders", (req, res) => {
   res.json(orders);
 });
 
-// ── Admin: stats ──
 router.get("/b/:code/stats", (req, res) => {
   const { code } = req.params;
   const biz = store.getBusiness(code);
