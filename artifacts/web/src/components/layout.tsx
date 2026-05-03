@@ -63,6 +63,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function AppSidebar({
+  children,
   location,
   navigate,
   health,
@@ -73,6 +74,7 @@ function AppSidebar({
   customer,
   logout,
 }: {
+  children: React.ReactNode;
   location: string;
   navigate: (to: string) => void;
   health: boolean;
