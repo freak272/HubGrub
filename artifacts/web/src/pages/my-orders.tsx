@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardList, Phone, Search, Package, Clock } from "lucide-react";
+import { ClipboardList, Phone, Search, Package, Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,11 +27,15 @@ type BizProfile = {
   emoji?: string;
 };
 
+function isEmail(value: string) {
+  return value.includes("@");
+}
+
 export default function MyOrders() {
   const { customer } = useAuth();
   const { businessCode, isDefaultBusiness } = useBusiness();
-  const [phone, setPhone] = useState(customer?.phone ?? "");
-  const [searchPhone, setSearchPhone] = useState(customer?.phone ?? "");
+  const [contact, setContact] = useState(customer?.phone ?? "");
+  const [searchContact, setSearchContact] = useState(customer?.phone ?? "");
   const [searched, setSearched] = useState(!!customer?.phone);
 
   const profileUrl = isDefaultBusiness
@@ -45,21 +49,27 @@ export default function MyOrders() {
 
   const theme = useBusinessTheme(bizProfile);
 
-  const ordersUrl = isDefaultBusiness
-    ? `/api/my-orders?phone=${encodeURIComponent(searchPhone)}`
-    : `/api/b/${businessCode}/my-orders?phone=${encodeURIComponent(searchPhone)}`;
+  // Support both phone and email lookup via the contact param
+  const buildOrdersUrl = (c: string) => {
+    const param = isEmail(c) ? `email=${encodeURIComponent(c)}` : `phone=${encodeURIComponent(c)}`;
+    return isDefaultBusiness
+      ? `/api/my-orders?${param}`
+      : `/api/b/${businessCode}/my-orders?${param}`;
+  };
 
   const { data: orders, isLoading } = useQuery<Order[]>({
-    queryKey: ["my-orders", businessCode, searchPhone],
-    queryFn: () => fetch(ordersUrl).then((r) => r.json()),
-    enabled: searched && !!searchPhone,
+    queryKey: ["my-orders", businessCode, searchContact],
+    queryFn: () => fetch(buildOrdersUrl(searchContact)).then((r) => r.json()),
+    enabled: searched && !!searchContact,
   });
 
   const handleSearch = () => {
-    if (!phone.trim()) return;
-    setSearchPhone(phone.trim());
+    if (!contact.trim()) return;
+    setSearchContact(contact.trim());
     setSearched(true);
   };
+
+  const looksLikeEmail = isEmail(contact);
 
   return (
     <div className="min-h-screen" style={{ background: theme.bgLight }}>
@@ -73,26 +83,28 @@ export default function MyOrders() {
       </div>
 
       <div className="max-w-xl mx-auto px-6 py-8 space-y-6">
-        {/* Phone lookup */}
+        {/* Contact lookup */}
         <div className="rounded-2xl border bg-white p-6 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 font-semibold">
-            <Phone size={16} />
+            {looksLikeEmail ? <Mail size={16} /> : <Phone size={16} />}
             Look up your orders
           </div>
           <div className="space-y-2">
-            <Label>WhatsApp Phone Number</Label>
+            <Label htmlFor="contact">Phone number or email address</Label>
             <div className="flex gap-2">
               <Input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. +27 82 123 4567"
+                id="contact"
+                type={looksLikeEmail ? "email" : "tel"}
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder="e.g. +1 555 123 4567 or name@example.com"
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-              <Button onClick={handleSearch} disabled={!phone.trim()} style={theme.buttonStyle}>
+              <Button onClick={handleSearch} disabled={!contact.trim()} style={theme.buttonStyle}>
                 <Search size={16} />
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">Enter the same contact you used when placing your order.</p>
           </div>
         </div>
 
@@ -105,7 +117,7 @@ export default function MyOrders() {
               <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
                 <ClipboardList className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
                 <p className="font-medium">No orders found</p>
-                <p className="text-sm text-muted-foreground mt-1">No orders are linked to {searchPhone}</p>
+                <p className="text-sm text-muted-foreground mt-1">No orders are linked to <span className="font-mono">{searchContact}</span></p>
               </div>
             ) : (
               <>

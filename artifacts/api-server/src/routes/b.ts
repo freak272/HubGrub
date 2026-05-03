@@ -153,17 +153,17 @@ router.post("/b/:code/orders/:id/advance", (req, res) => {
 // ── Public: customer order history ──
 router.get("/b/:code/my-orders", (req, res) => {
   const { code } = req.params;
-  const phone = req.query.phone as string;
-  if (!phone) { res.status(400).json({ error: "phone is required" }); return; }
-  const orders = store.bizGetOrdersByPhone(code, phone);
+  const contact = (req.query.contact ?? req.query.phone ?? req.query.email) as string | undefined;
+  if (!contact) { res.status(400).json({ error: "contact (phone or email) is required" }); return; }
+  const orders = store.bizGetOrdersByContact(code, contact);
   res.json(orders);
 });
 
 // ── Public: customer order history for default business ──
 router.get("/my-orders", (req, res) => {
-  const phone = req.query.phone as string;
-  if (!phone) { res.status(400).json({ error: "phone is required" }); return; }
-  const orders = store.getOrdersByPhone(phone);
+  const contact = (req.query.contact ?? req.query.phone ?? req.query.email) as string | undefined;
+  if (!contact) { res.status(400).json({ error: "contact (phone or email) is required" }); return; }
+  const orders = store.getOrdersByContact(contact);
   res.json(orders);
 });
 

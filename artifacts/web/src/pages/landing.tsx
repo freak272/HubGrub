@@ -13,7 +13,27 @@ export default function Landing() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isAutoRedirecting, setIsAutoRedirecting] = useState(false);
   const [businesses, setBusinesses] = useState<BizSummary[]>([]);
+
+  // Handle ?biz=CODE query param (from QR/share links)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bizParam = params.get("biz");
+    if (bizParam) {
+      setIsAutoRedirecting(true);
+      fetch(`/api/b/${bizParam.toUpperCase()}/profile`)
+        .then((r) => {
+          if (r.ok) {
+            setBusinessCode(bizParam.toUpperCase());
+            navigate("/place-order");
+          } else {
+            setIsAutoRedirecting(false);
+          }
+        })
+        .catch(() => setIsAutoRedirecting(false));
+    }
+  }, [setBusinessCode, navigate]);
 
   useEffect(() => {
     fetch("/api/businesses")
@@ -31,7 +51,7 @@ export default function Landing() {
       const res = await fetch(`/api/b/${trimmed}/profile`);
       if (!res.ok) { setError("Business not found. Check the code and try again."); return; }
       setBusinessCode(trimmed);
-      navigate("/login/customer");
+      navigate("/place-order");
     } catch {
       setError("Could not connect. Please try again.");
     } finally {
@@ -41,8 +61,19 @@ export default function Landing() {
 
   const selectBusiness = (biz: BizSummary) => {
     setBusinessCode(biz.code);
-    navigate("/login/customer");
+    navigate("/place-order");
   };
+
+  if (isAutoRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm">Loading store…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-screen bg-background">

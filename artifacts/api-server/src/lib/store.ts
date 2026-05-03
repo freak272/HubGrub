@@ -30,6 +30,19 @@ function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+// Match a stored contact value (phone or email) against a search term
+function matchContact(stored: string | undefined, search: string): boolean {
+  if (!stored || !search) return false;
+  const s = search.trim();
+  if (s.includes("@")) {
+    // Email match — case-insensitive exact match
+    return stored.toLowerCase() === s.toLowerCase();
+  }
+  // Phone match — normalize digits and check substring
+  const normalize = (v: string) => v.replace(/\D/g, "");
+  return normalize(stored).includes(normalize(s));
+}
+
 export type BusinessType = "restaurant" | "shop" | "service" | null;
 export type BusinessSubtype = "fastfood" | "cafe" | "pizza" | null;
 
@@ -157,10 +170,10 @@ export const store = {
     return this._advanceOrderIn(biz.orders, orderId);
   },
 
-  bizGetOrdersByPhone(code: string, phone: string): Order[] {
+  bizGetOrdersByContact(code: string, contact: string): Order[] {
     const biz = this.getBusiness(code);
     if (!biz) return [];
-    return biz.orders.filter((o) => o.phone && o.phone.replace(/\D/g, "").includes(phone.replace(/\D/g, "")));
+    return biz.orders.filter((o) => matchContact(o.phone, contact));
   },
 
   bizGetStats(code: string) {
@@ -169,8 +182,8 @@ export const store = {
     return this._getStatsFrom(biz.products, biz.orders);
   },
 
-  getOrdersByPhone(phone: string): Order[] {
-    return this._default.orders.filter((o) => o.phone && o.phone.replace(/\D/g, "").includes(phone.replace(/\D/g, "")));
+  getOrdersByContact(contact: string): Order[] {
+    return this._default.orders.filter((o) => matchContact(o.phone, contact));
   },
 
   // ── Internal helpers ──

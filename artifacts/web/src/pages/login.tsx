@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
-import { ArrowRight, ArrowLeft, ShieldCheck, ShoppingBag, Store, AlertCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, ShieldCheck, ShoppingBag, Store, AlertCircle, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRole } from "@/contexts/RoleContext";
 import { useAdminKey } from "@/contexts/AdminKeyContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusiness } from "@/contexts/BusinessContext";
+import { useBusinessTheme } from "@/hooks/useBusinessTheme";
+import { useQuery } from "@tanstack/react-query";
+
+type BizProfile = {
+  type: "restaurant" | "shop" | "service" | null;
+  subtype: "fastfood" | "cafe" | "pizza" | null;
+  name: string;
+  description?: string;
+  themeColor?: string;
+  emoji?: string;
+};
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -14,7 +26,8 @@ export default function Login() {
   const roleParam = (match ? (params?.role as "customer" | "business") : "customer") ?? "customer";
 
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [contact, setContact] = useState("");
+  const [contactMethod, setContactMethod] = useState<"phone" | "email">("phone");
   const [businessKey, setBusinessKey] = useState("");
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -22,6 +35,20 @@ export default function Login() {
   const { role, setRole } = useRole();
   const { unlock } = useAdminKey();
   const { loginCustomer } = useAuth();
+  const { businessCode, isDefaultBusiness } = useBusiness();
+
+  // Fetch business profile for branding when arriving from a business selection
+  const profileUrl = roleParam === "customer"
+    ? (isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`)
+    : null;
+
+  const { data: bizProfile } = useQuery<BizProfile>({
+    queryKey: ["biz-profile-login", businessCode],
+    queryFn: () => fetch(profileUrl!).then((r) => r.json()),
+    enabled: roleParam === "customer" && !!profileUrl,
+  });
+
+  const theme = useBusinessTheme(bizProfile ?? null);
 
   useEffect(() => {
     if (role === "customer") navigate("/place-order");
@@ -29,11 +56,11 @@ export default function Login() {
   }, [role, navigate]);
 
   const handleCustomerLogin = () => {
-    if (!phone.trim()) {
-      setError("Please enter your WhatsApp phone number.");
+    if (!contact.trim()) {
+      setError("Please enter your phone number or email address.");
       return;
     }
-    loginCustomer(name, phone);
+    loginCustomer(name, contact);
     setRole("customer");
     navigate("/place-order");
   };
@@ -63,26 +90,52 @@ export default function Login() {
     }
   };
 
+  const hasBizBranding = roleParam === "customer" && bizProfile && bizProfile.name;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-background">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-8"
+      style={hasBizBranding ? theme.bgLight ? { background: theme.bgLight } : {} : {}}
+    >
       <div className="w-full max-w-md">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <ArrowLeft size={14} /> Back to role selection
+          <ArrowLeft size={14} /> Back to selection
         </Link>
+
+        {/* Business branding banner */}
+        {hasBizBranding && (
+          <div className="rounded-2xl border mb-4 overflow-hidden" style={theme.heroStyle}>
+            <div className="px-6 py-4 flex items-center gap-4">
+              <span className="text-3xl">{theme.emoji}</span>
+              <div>
+                <div className="font-bold text-lg">{bizProfile?.name}</div>
+                {bizProfile?.description && (
+                  <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{bizProfile.description}</div>
+                )}
+                <div className="text-xs text-muted-foreground mt-0.5">{theme.orderPrompt}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl border bg-card p-8 shadow-sm space-y-6">
           <div className="text-center space-y-2">
-            <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <div
+              className="mx-auto h-14 w-14 rounded-full flex items-center justify-center"
+              style={hasBizBranding ? theme.accentStyle : { background: "hsl(var(--primary) / 0.1)" }}
+            >
               {roleParam === "customer"
-                ? <ShoppingBag className="h-7 w-7 text-primary" />
+                ? <ShoppingBag className="h-7 w-7" style={hasBizBranding ? {} : { color: "hsl(var(--primary))" }} />
                 : <Store className="h-7 w-7 text-primary" />}
             </div>
             <h1 className="text-2xl font-bold">
-              {roleParam === "customer" ? "Customer Sign In" : "Business Sign In"}
+              {roleParam === "customer" ? "Start Ordering" : "Business Sign In"}
             </h1>
             <p className="text-sm text-muted-foreground">
               {roleParam === "customer"
-                ? "Enter your details to start ordering"
+                ? hasBizBranding
+                  ? `Order from ${bizProfile?.name}`
+                  : "Enter your details to start ordering"
                 : "Enter your admin key to access the dashboard"}
             </p>
           </div>
@@ -97,30 +150,54 @@ export default function Login() {
           {roleParam === "customer" ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Your Name</Label>
+                <Label htmlFor="name">Your Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. John Doe"
+                  placeholder="e.g. Jane Smith"
+                  onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">
-                  WhatsApp Phone Number <span className="text-destructive">*</span>
+                <Label htmlFor="contact">
+                  Contact Details <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => { setPhone(e.target.value); setError(""); }}
-                  placeholder="e.g. +27 82 123 4567"
-                  onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()}
-                />
-                <p className="text-xs text-muted-foreground">Used to notify you when your order is ready</p>
+                <div className="flex gap-2">
+                  <Input
+                    id="contact"
+                    type={contactMethod === "email" ? "email" : "tel"}
+                    value={contact}
+                    onChange={(e) => { setContact(e.target.value); setError(""); }}
+                    placeholder={contactMethod === "email" ? "e.g. name@example.com" : "e.g. +1 555 123 4567"}
+                    onKeyDown={(e) => e.key === "Enter" && handleCustomerLogin()}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => { setContactMethod((m) => m === "phone" ? "email" : "phone"); setContact(""); setError(""); }}
+                    title={contactMethod === "phone" ? "Switch to email" : "Switch to phone"}
+                  >
+                    {contactMethod === "phone" ? <Mail size={16} /> : <Phone size={16} />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {contactMethod === "phone"
+                    ? "Used to look up your orders later. No spam."
+                    : "Used to look up your orders later. No spam."}
+                  {" "}<button type="button" className="underline hover:text-foreground" onClick={() => setContactMethod((m) => m === "phone" ? "email" : "phone")}>
+                    Use {contactMethod === "phone" ? "email" : "phone"} instead
+                  </button>
+                </p>
               </div>
-              <Button className="w-full" onClick={handleCustomerLogin} disabled={!phone.trim()}>
-                Start Ordering <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                className="w-full"
+                onClick={handleCustomerLogin}
+                disabled={!contact.trim()}
+                style={hasBizBranding ? theme.buttonStyle : {}}
+              >
+                {hasBizBranding ? theme.orderVerb : "Start Ordering"} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           ) : (
