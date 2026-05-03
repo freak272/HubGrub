@@ -29,9 +29,7 @@ function readStoredBusinesses(): CustomerBusiness[] {
 }
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
-  const [activeBusinessCode, setActiveBusinessCodeState] = useState<string | null>(() => {
-    return sessionStorage.getItem(ACTIVE_KEY) ?? null;
-  });
+  const [activeBusinessCode, setActiveBusinessCodeState] = useState<string | null>(() => sessionStorage.getItem(ACTIVE_KEY) ?? null);
   const [customerBusinesses, setCustomerBusinesses] = useState<CustomerBusiness[]>(() => readStoredBusinesses());
 
   const setActiveBusinessCode = (code: string | null) => {

@@ -1,12 +1,21 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ShoppingBag, ClipboardList, LogOut, Store, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 
 export default function CustomerHome() {
+  const [, navigate] = useLocation();
   const { customer, logout } = useAuth();
-  const { activeBusinessCode, customerBusinesses } = useBusiness();
+  const { activeBusinessCode, customerBusinesses, setActiveBusinessCode, addCustomerBusiness } = useBusiness();
+
+  const handleScanPlaceholder = () => {
+    const code = window.prompt("Enter business code to unlock");
+    if (!code) return;
+    const normalized = code.trim().toUpperCase();
+    addCustomerBusiness({ code: normalized, name: normalized });
+    navigate(`/customer?biz=${normalized}`);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -27,16 +36,18 @@ export default function CustomerHome() {
               <div className="font-semibold">Your businesses</div>
               <div className="text-sm text-muted-foreground">Open a business you scanned with the app.</div>
             </div>
-            <Link href="/" className="text-sm underline text-muted-foreground hover:text-foreground">Add another</Link>
+            <button onClick={handleScanPlaceholder} className="inline-flex items-center gap-2 text-sm underline text-muted-foreground hover:text-foreground">
+              <PlusCircle size={16} /> Add another
+            </button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {customerBusinesses.length === 0 ? (
               <div className="text-sm text-muted-foreground">Scan a business QR to add it here.</div>
             ) : customerBusinesses.map((biz) => (
-              <Link key={biz.code} href={`/customer?biz=${biz.code}`} className={`rounded-2xl border p-4 hover:bg-muted/40 transition-colors ${biz.code === activeBusinessCode ? "ring-2 ring-primary" : ""}`}>
+              <button key={biz.code} onClick={() => { setActiveBusinessCode(biz.code); navigate(`/customer?biz=${biz.code}`); }} className={`rounded-2xl border p-4 hover:bg-muted/40 transition-colors text-left ${biz.code === activeBusinessCode ? "ring-2 ring-primary" : ""}`}>
                 <div className="flex items-center gap-2 font-semibold mb-1"><Store size={16} /> {biz.name}</div>
                 <div className="text-xs text-muted-foreground font-mono">{biz.code}</div>
-              </Link>
+              </button>
             ))}
           </div>
         </div>

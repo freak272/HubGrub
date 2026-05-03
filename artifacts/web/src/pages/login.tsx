@@ -35,7 +35,7 @@ export default function Login() {
   const { role, setRole } = useRole();
   const { unlock } = useAdminKey();
   const { loginCustomer } = useAuth();
-  const { activeBusinessCode, isDefaultBusiness, addCustomerBusiness } = useBusiness();
+  const { addCustomerBusiness } = useBusiness();
 
   const bizFromQuery = new URLSearchParams(window.location.search).get("biz")?.toUpperCase() ?? null;
   const profileUrl = roleParam === "customer" && bizFromQuery ? `/api/b/${bizFromQuery}/profile` : null;
