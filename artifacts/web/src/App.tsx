@@ -31,7 +31,7 @@ function CustomerRoute({ component: Component }: { component: ComponentType }) {
 function BusinessRoute({ component: Component }: { component: ComponentType }) {
   const { role } = useRole();
   if (!role) return <Redirect to="/login/business" />;
-  if (role === "customer") return <Redirect to="/customer/home" />;
+  if (role === "customer") return <Redirect to="/customer" />;
   return <Component />;
 }
 
@@ -40,7 +40,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/login/:role" component={Login} />
-      <Route path="/customer/home">
+      <Route path="/customer">
         <CustomerRoute component={CustomerHome} />
       </Route>
       <Route path="/place-order">

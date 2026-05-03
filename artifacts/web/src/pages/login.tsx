@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useRole } from "@/contexts/RoleContext";
 import { useAdminKey } from "@/contexts/AdminKeyContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBusiness } from "@/contexts/BusinessContext";
+import { useBusiness, type CustomerBusiness } from "@/contexts/BusinessContext";
 import { useBusinessTheme } from "@/hooks/useBusinessTheme";
 import { useQuery } from "@tanstack/react-query";
 
@@ -35,11 +35,12 @@ export default function Login() {
   const { role, setRole } = useRole();
   const { unlock } = useAdminKey();
   const { loginCustomer } = useAuth();
-  const { businessCode, isDefaultBusiness } = useBusiness();
+  const { activeBusinessCode, isDefaultBusiness, addCustomerBusiness } = useBusiness();
 
-  const profileUrl = roleParam === "customer" ? (isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`) : null;
+  const bizFromQuery = new URLSearchParams(window.location.search).get("biz")?.toUpperCase() ?? null;
+  const profileUrl = roleParam === "customer" && bizFromQuery ? `/api/b/${bizFromQuery}/profile` : null;
   const { data: bizProfile } = useQuery<BizProfile>({
-    queryKey: ["biz-profile-login", businessCode],
+    queryKey: ["biz-profile-login", bizFromQuery],
     queryFn: () => fetch(profileUrl!).then((r) => r.json()),
     enabled: roleParam === "customer" && !!profileUrl,
   });
@@ -47,7 +48,7 @@ export default function Login() {
   const theme = useBusinessTheme(bizProfile ?? null);
 
   useEffect(() => {
-    if (role === "customer") navigate("/customer/home");
+    if (role === "customer") navigate("/customer");
     if (role === "business") navigate("/dashboard");
   }, [role, navigate]);
 
@@ -57,8 +58,12 @@ export default function Login() {
       return;
     }
     loginCustomer(name, contact);
+    if (bizFromQuery && bizProfile) {
+      const business: CustomerBusiness = { code: bizFromQuery, name: bizProfile.name, emoji: bizProfile.emoji ?? null };
+      addCustomerBusiness(business);
+    }
     setRole("customer");
-    navigate("/customer/home");
+    navigate("/customer");
   };
 
   const handleBusinessLogin = async () => {
@@ -95,30 +100,17 @@ export default function Login() {
           <ArrowLeft size={14} /> Back to selection
         </Link>
 
-        {hasBizBranding && (
-          <div className="rounded-2xl border mb-4 overflow-hidden" style={theme.heroStyle}>
-            <div className="px-6 py-4 flex items-center gap-4">
-              <span className="text-3xl">{theme.emoji}</span>
-              <div>
-                <div className="font-bold text-lg">{bizProfile?.name}</div>
-                {bizProfile?.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{bizProfile.description}</div>}
-                <div className="text-xs text-muted-foreground mt-0.5">{theme.orderPrompt}</div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="rounded-2xl border bg-card p-8 shadow-sm space-y-6">
           <div className="text-center space-y-2">
             <div className="mx-auto h-14 w-14 rounded-full flex items-center justify-center" style={hasBizBranding ? theme.accentStyle : { background: "hsl(var(--primary) / 0.1)" }}>
               {roleParam === "customer" ? <ShoppingBag className="h-7 w-7" style={hasBizBranding ? {} : { color: "hsl(var(--primary))" }} /> : <Store className="h-7 w-7 text-primary" />}
             </div>
-            <h1 className="text-2xl font-bold">{roleParam === "customer" ? "Start Ordering" : "Business Sign In"}</h1>
+            <h1 className="text-2xl font-bold">{roleParam === "customer" ? "Customer Sign In" : "Business Sign In"}</h1>
             <p className="text-sm text-muted-foreground">
               {roleParam === "customer"
-                ? hasBizBranding
-                  ? `Order from ${bizProfile?.name}`
-                  : "Create your customer account to enter your own space"
+                ? bizProfile
+                  ? `Join ${bizProfile.name} and open your customer space`
+                  : "Scan a business QR to open your customer space"
                 : "Enter your admin key to access the dashboard"}
             </p>
           </div>
@@ -152,19 +144,11 @@ export default function Login() {
                     {contactMethod === "phone" ? <Mail size={16} /> : <Phone size={16} />}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Used to look up your orders later. No spam.</p>
+                <p className="text-xs text-muted-foreground">Used to look up your orders later.</p>
               </div>
               <Button className="w-full" onClick={handleCustomerLogin} disabled={!contact.trim()} style={hasBizBranding ? theme.buttonStyle : {}}>
-                Create Customer Account <ArrowRight className="ml-2 h-4 w-4" />
+                Enter Customer Space <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <div className="rounded-2xl border bg-muted/30 p-4 text-sm space-y-2">
-                <div className="font-medium">Your customer space includes</div>
-                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                  <li>Place new orders</li>
-                  <li>View your order status dashboard</li>
-                  <li>Move between ordering and order history</li>
-                </ul>
-              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -182,7 +166,7 @@ export default function Login() {
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           {roleParam === "customer" ? (
-            <>Already have a customer account? <Link href="/customer/home" className="underline hover:text-foreground">Open your space</Link></>
+            <>Have a business QR? scan it and sign in to add that shop to your space.</>
           ) : (
             <>Not a business? <Link href="/login/customer" className="underline hover:text-foreground">Continue as Customer</Link></>
           )}
