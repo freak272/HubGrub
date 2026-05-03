@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminKeyProvider } from "@/contexts/AdminKeyContext";
 import { RoleProvider, useRole } from "@/contexts/RoleContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BusinessProvider } from "@/contexts/BusinessContext";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout";
 import Landing from "@/pages/landing";
@@ -14,6 +15,7 @@ import Inventory from "@/pages/inventory";
 import Orders from "@/pages/orders";
 import PlaceOrder from "@/pages/place-order";
 import SetupBusiness from "@/pages/setup-business";
+import MyOrders from "@/pages/my-orders";
 import type { ComponentType } from "react";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,9 @@ function Router() {
         <Route path="/place-order">
           <CustomerRoute component={PlaceOrder} />
         </Route>
+        <Route path="/my-orders">
+          <CustomerRoute component={MyOrders} />
+        </Route>
         <Route path="/dashboard">
           <BusinessRoute component={Dashboard} />
         </Route>
@@ -63,16 +68,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <RoleProvider>
-            <AdminKeyProvider>
-              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <Router />
-              </WouterRouter>
-              <Toaster />
-            </AdminKeyProvider>
-          </RoleProvider>
-        </AuthProvider>
+        <BusinessProvider>
+          <AuthProvider>
+            <RoleProvider>
+              <AdminKeyProvider>
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                  <Router />
+                </WouterRouter>
+                <Toaster />
+              </AdminKeyProvider>
+            </RoleProvider>
+          </AuthProvider>
+        </BusinessProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
