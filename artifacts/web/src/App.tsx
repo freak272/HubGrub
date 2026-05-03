@@ -23,14 +23,14 @@ const queryClient = new QueryClient();
 
 function CustomerRoute({ component: Component }: { component: ComponentType }) {
   const { role } = useRole();
-  if (!role) return <Redirect to="/" />;
+  if (!role) return <Redirect to="/login/customer" />;
   if (role === "business") return <Redirect to="/dashboard" />;
   return <Component />;
 }
 
 function BusinessRoute({ component: Component }: { component: ComponentType }) {
   const { role } = useRole();
-  if (!role) return <Redirect to="/" />;
+  if (!role) return <Redirect to="/login/business" />;
   if (role === "customer") return <Redirect to="/customer/home" />;
   return <Component />;
 }

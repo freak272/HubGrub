@@ -43,9 +43,7 @@ export default function MyOrders() {
   const [searchContact, setSearchContact] = useState(customer?.contact ?? "");
   const [searched, setSearched] = useState(!!customer?.contact);
 
-  const profileUrl = isDefaultBusiness
-    ? "/api/business-profile"
-    : `/api/b/${businessCode}/profile`;
+  const profileUrl = isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`;
 
   const { data: bizProfile } = useQuery<BizProfile>({
     queryKey: ["biz-profile-myorders", businessCode],
@@ -57,7 +55,7 @@ export default function MyOrders() {
   const canTrack = trackingEnabled || bizProfile?.type === "restaurant";
 
   const buildOrdersUrl = (c: string) => {
-    const param = isEmail(c) ? `email=${encodeURIComponent(c)}` : `phone=${encodeURIComponent(c)}`;
+    const param = isEmail(c) ? `email=${encodeURIComponent(c)}` : `contact=${encodeURIComponent(c)}`;
     return isDefaultBusiness
       ? `/api/my-orders?${param}`
       : `/api/b/${businessCode}/my-orders?${param}`;

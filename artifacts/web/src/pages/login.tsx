@@ -118,7 +118,7 @@ export default function Login() {
               {roleParam === "customer"
                 ? hasBizBranding
                   ? `Order from ${bizProfile?.name}`
-                  : "Enter your details to start ordering"
+                  : "Create your customer account to enter your own space"
                 : "Enter your admin key to access the dashboard"}
             </p>
           </div>
@@ -155,8 +155,16 @@ export default function Login() {
                 <p className="text-xs text-muted-foreground">Used to look up your orders later. No spam.</p>
               </div>
               <Button className="w-full" onClick={handleCustomerLogin} disabled={!contact.trim()} style={hasBizBranding ? theme.buttonStyle : {}}>
-                {hasBizBranding ? theme.orderVerb : "Start Ordering"} <ArrowRight className="ml-2 h-4 w-4" />
+                Create Customer Account <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <div className="rounded-2xl border bg-muted/30 p-4 text-sm space-y-2">
+                <div className="font-medium">Your customer space includes</div>
+                <ul className="list-disc pl-5 text-muted-foreground space-y-1">
+                  <li>Place new orders</li>
+                  <li>View your order status dashboard</li>
+                  <li>Move between ordering and order history</li>
+                </ul>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -174,7 +182,7 @@ export default function Login() {
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           {roleParam === "customer" ? (
-            <>Not a customer? <Link href="/login/business" className="underline hover:text-foreground">Sign in as Business</Link></>
+            <>Already have a customer account? <Link href="/customer/home" className="underline hover:text-foreground">Open your space</Link></>
           ) : (
             <>Not a business? <Link href="/login/customer" className="underline hover:text-foreground">Continue as Customer</Link></>
           )}

@@ -145,7 +145,7 @@ export default function PlaceOrder() {
               <Button onClick={reset} style={theme.buttonStyle}>
                 Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
               </Button>
-              {canTrack && <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>}
+              <Button variant="outline" onClick={() => navigate("/my-orders")}>Go to My Orders</Button>
               {!canTrack && <p className="text-xs text-muted-foreground">This business has turned off live tracking, but you can still check when your order is ready in My Orders.</p>}
             </div>
           </div>
@@ -170,6 +170,17 @@ export default function PlaceOrder() {
       </div>
 
       <div className="max-w-2xl mx-auto w-full p-8 space-y-6">
+        <div className="rounded-2xl border bg-card p-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="font-semibold">Customer Space</div>
+            <div className="text-xs text-muted-foreground">Move between ordering and your status dashboard</div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant={mode === "type" ? "default" : "outline"} size="sm" onClick={() => setMode("type")}>Place Order</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/my-orders")}>My Orders</Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="customer">Your Name</Label>
@@ -248,11 +259,6 @@ export default function PlaceOrder() {
             </Button>
           </div>
         )}
-
-        <button onClick={() => navigate("/my-orders")} className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
-          <ClipboardList size={14} />
-          Track a previous order
-        </button>
       </div>
     </div>
   );
