@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, PenLine, Package, Phone, ClipboardList } from "lucide-react";
+import { CheckCircle2, PenLine, Package, Phone, ClipboardList, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,18 +34,15 @@ export default function PlaceOrder() {
   const [mode, setMode] = useState<Mode>("type");
   const [customerName, setCustomerName] = useState(customer?.name ?? "");
   const [phone, setPhone] = useState(customer?.phone ?? "");
+  const [contact, setContact] = useState("");
+  const [contactMethod, setContactMethod] = useState<"phone" | "email">("phone");
   const [itemsText, setItemsText] = useState("");
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
-  const profileUrl = isDefaultBusiness
-    ? "/api/business-profile"
-    : `/api/b/${businessCode}/profile`;
-
-  const productsUrl = isDefaultBusiness
-    ? "/api/products"
-    : `/api/b/${businessCode}/products`;
+  const profileUrl = isDefaultBusiness ? "/api/business-profile" : `/api/b/${businessCode}/profile`;
+  const productsUrl = isDefaultBusiness ? "/api/products" : `/api/b/${businessCode}/products`;
 
   const { data: bizProfile } = useQuery<BizProfile>({
     queryKey: ["business-profile", businessCode],
@@ -86,7 +83,7 @@ export default function PlaceOrder() {
       const res = await fetch(orderFormUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: phone.trim() || undefined, items: trimmed }),
+        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || phone.trim() || undefined, items: trimmed }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Failed to place order"); }
       queryClient.invalidateQueries({ queryKey: ["products", businessCode] });
@@ -104,7 +101,7 @@ export default function PlaceOrder() {
       const res = await fetch(ordersUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: phone.trim() || undefined, items }),
+        body: JSON.stringify({ customer: customerName.trim() || "Guest", phone: contact.trim() || phone.trim() || undefined, items }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Failed to place order"); }
       queryClient.invalidateQueries({ queryKey: ["products", businessCode] });
@@ -128,9 +125,7 @@ export default function PlaceOrder() {
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="max-w-sm w-full text-center space-y-5">
             <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-full flex items-center justify-center text-3xl" style={theme.accentStyle}>
-                ✓
-              </div>
+              <div className="h-16 w-16 rounded-full flex items-center justify-center text-3xl" style={theme.accentStyle}>✓</div>
             </div>
             <h2 className="text-2xl font-bold">
               {bizProfile?.type === "service" ? "Booking Received!" : bizProfile?.type === "shop" ? "Order Placed!" : "Order Received!"}
@@ -138,20 +133,17 @@ export default function PlaceOrder() {
             <p className="text-muted-foreground">
               Thank you{customerName ? `, ${customerName}` : ""}! We'll take care of it shortly.
             </p>
-            {phone && (
+            {contact && (
               <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                <Phone size={14} />
-                We'll notify you on {phone}
+                {contactMethod === "email" ? <Mail size={14} /> : <Phone size={14} />}
+                We'll notify you at {contact}
               </div>
             )}
             <div className="flex flex-col gap-2">
               <Button onClick={reset} style={theme.buttonStyle}>
                 Place Another {bizProfile?.type === "service" ? "Booking" : "Order"}
               </Button>
-              <Button variant="outline" onClick={() => navigate("/my-orders")}>
-                <ClipboardList size={16} className="mr-2" />
-                Track My Orders
-              </Button>
+              <Button variant="outline" onClick={() => navigate("/my-orders")}>Track My Orders</Button>
             </div>
           </div>
         </div>
@@ -161,16 +153,13 @@ export default function PlaceOrder() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: theme.bgLight }}>
-      {/* Business hero header */}
       <div className="px-8 py-8 border-b" style={theme.heroStyle}>
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-2">
             <span className="text-4xl">{theme.emoji}</span>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{bizProfile?.name ?? "Place an Order"}</h1>
-              {bizProfile?.description && (
-                <p className="text-muted-foreground text-sm mt-0.5">{bizProfile.description}</p>
-              )}
+              {bizProfile?.description && <p className="text-muted-foreground text-sm mt-0.5">{bizProfile.description}</p>}
             </div>
           </div>
           <p className="text-muted-foreground mt-3">{theme.orderPrompt}</p>
@@ -178,35 +167,29 @@ export default function PlaceOrder() {
       </div>
 
       <div className="max-w-2xl mx-auto w-full p-8 space-y-6">
-        {/* Name & phone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="customer">Your Name</Label>
             <Input id="customer" placeholder="Optional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input id="phone" type="tel" placeholder="e.g. +27 82 123 4567" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Label htmlFor="contact">Contact Details</Label>
+            <div className="flex gap-2">
+              <Input id="contact" type={contactMethod === "email" ? "email" : "tel"} placeholder={contactMethod === "email" ? "e.g. name@example.com" : "e.g. +27 82 123 4567"} value={contact} onChange={(e) => setContact(e.target.value)} />
+              <Button type="button" variant="outline" onClick={() => setContactMethod((m) => (m === "phone" ? "email" : "phone"))}>
+                {contactMethod === "phone" ? <Mail size={16} /> : <Phone size={16} />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">We can notify you by phone or email — no WhatsApp required.</p>
           </div>
         </div>
 
-        {/* Mode toggle */}
         <div className="flex border rounded-lg overflow-hidden">
-          <button
-            onClick={() => setMode("type")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors"
-            style={mode === "type" ? theme.buttonStyle : { color: "#6b7280" }}
-          >
-            <PenLine size={15} />
-            Type my {bizProfile?.type === "service" ? "request" : "order"}
+          <button onClick={() => setMode("type")} className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors" style={mode === "type" ? theme.buttonStyle : { color: "#6b7280" }}>
+            <PenLine size={15} /> Type my {bizProfile?.type === "service" ? "request" : "order"}
           </button>
-          <button
-            onClick={() => setMode("browse")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors"
-            style={mode === "browse" ? theme.buttonStyle : { color: "#6b7280" }}
-          >
-            <Package size={15} />
-            {theme.browseLabel}
+          <button onClick={() => setMode("browse")} className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors" style={mode === "browse" ? theme.buttonStyle : { color: "#6b7280" }}>
+            <Package size={15} /> {theme.browseLabel}
           </button>
         </div>
 
@@ -214,15 +197,7 @@ export default function PlaceOrder() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="items">{bizProfile?.type === "service" ? "Describe what you need" : "What would you like?"}</Label>
-              <Textarea
-                id="items"
-                placeholder={theme.searchPlaceholder}
-                value={itemsText}
-                onChange={(e) => setItemsText(e.target.value)}
-                className="resize-none"
-                rows={3}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleTypeSubmit(); }}
-              />
+              <Textarea id="items" placeholder={theme.searchPlaceholder} value={itemsText} onChange={(e) => setItemsText(e.target.value)} className="resize-none" rows={3} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleTypeSubmit(); }} />
               <p className="text-xs text-muted-foreground">Separate multiple items with commas. Press ⌘ + Enter to submit.</p>
             </div>
             <Button className="w-full" size="lg" onClick={handleTypeSubmit} disabled={isPending || !itemsText.trim()} style={theme.buttonStyle}>
@@ -245,23 +220,13 @@ export default function PlaceOrder() {
                       <div className="font-medium">{product.name}</div>
                       <div className="text-sm text-muted-foreground">
                         {product.price > 0 ? `$${product.price.toFixed(2)}` : "Price TBD"}
-                        {product.stock < 10 && (
-                          <span className="ml-2 text-amber-600 font-medium">Only {product.stock} left</span>
-                        )}
+                        {product.stock < 10 && <span className="ml-2 text-amber-600 font-medium">Only {product.stock} left</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        className="h-8 w-8 rounded-full border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors disabled:opacity-40"
-                        onClick={() => updateQuantity(product.id, -1, product.stock)}
-                        disabled={(selectedItems[product.id] || 0) <= 0}
-                      >−</button>
+                      <button className="h-8 w-8 rounded-full border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors disabled:opacity-40" onClick={() => updateQuantity(product.id, -1, product.stock)} disabled={(selectedItems[product.id] || 0) <= 0}>−</button>
                       <span className="w-6 text-center text-sm font-mono font-medium">{selectedItems[product.id] || 0}</span>
-                      <button
-                        className="h-8 w-8 rounded-full border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors disabled:opacity-40"
-                        onClick={() => updateQuantity(product.id, 1, product.stock)}
-                        disabled={(selectedItems[product.id] || 0) >= product.stock}
-                      >+</button>
+                      <button className="h-8 w-8 rounded-full border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors disabled:opacity-40" onClick={() => updateQuantity(product.id, 1, product.stock)} disabled={(selectedItems[product.id] || 0) >= product.stock}>+</button>
                     </div>
                   </div>
                 ))}
@@ -281,10 +246,7 @@ export default function PlaceOrder() {
           </div>
         )}
 
-        <button
-          onClick={() => navigate("/my-orders")}
-          className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-        >
+        <button onClick={() => navigate("/my-orders")} className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
           <ClipboardList size={14} />
           Track a previous order
         </button>

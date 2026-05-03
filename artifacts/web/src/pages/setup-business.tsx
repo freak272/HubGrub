@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings2, Save, CheckCircle2, Link2, Copy, Palette } from "lucide-react";
+import { Settings2, Save, CheckCircle2, Link2, Copy, Palette, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +20,11 @@ type BusinessType = "restaurant" | "shop" | "service" | "";
 type BusinessSubtype = "fastfood" | "cafe" | "pizza" | "";
 
 const THEME_COLORS = [
-  { value: "amber",  label: "Amber",  hex: "#d97706" },
-  { value: "red",    label: "Red",    hex: "#dc2626" },
+  { value: "amber", label: "Amber", hex: "#d97706" },
+  { value: "red", label: "Red", hex: "#dc2626" },
   { value: "orange", label: "Orange", hex: "#ea580c" },
-  { value: "blue",   label: "Blue",   hex: "#2563eb" },
-  { value: "green",  label: "Green",  hex: "#16a34a" },
+  { value: "blue", label: "Blue", hex: "#2563eb" },
+  { value: "green", label: "Green", hex: "#16a34a" },
   { value: "purple", label: "Purple", hex: "#7c3aed" },
 ];
 
@@ -37,7 +37,7 @@ function SetupForm() {
   const [description, setDescription] = useState("");
   const [themeColor, setThemeColor] = useState("amber");
   const [emoji, setEmoji] = useState("");
-  const [bizCode, setBizCode] = useState("DEFAULT");
+  const [bizCode, setBizCode] = useState("MAIN01");
   const [saved, setSaved] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
@@ -60,7 +60,7 @@ function SetupForm() {
         setDescription(data.description ?? "");
         setThemeColor(data.themeColor ?? "amber");
         setEmoji(data.emoji ?? "");
-        setBizCode(data.code ?? "DEFAULT");
+        setBizCode(data.code ?? "MAIN01");
       })
       .catch(() => {});
   }, [adminKey]);
@@ -81,15 +81,14 @@ function SetupForm() {
     } catch {
       toast({ title: "Failed to save", variant: "destructive" });
     } finally {
-      setIsPending(false); }
+      setIsPending(false);
+    }
   };
 
   const customerLink = `${window.location.origin}${import.meta.env.BASE_URL}`;
-  const copyLink = () => {
-    navigator.clipboard.writeText(customerLink).then(() => toast({ title: "Link copied!" }));
-  };
-  const copyCode = () => {
-    navigator.clipboard.writeText(bizCode).then(() => toast({ title: "Code copied!" }));
+  const qrLink = `${customerLink}?biz=${encodeURIComponent(bizCode)}`;
+  const copyText = (value: string, title: string) => {
+    navigator.clipboard.writeText(value).then(() => toast({ title }));
   };
 
   return (
@@ -104,20 +103,22 @@ function SetupForm() {
         </div>
       </div>
 
-      {/* Shareable link card */}
-      <div className="rounded-xl border bg-card p-5 mb-6 space-y-3">
+      <div className="rounded-xl border bg-card p-5 mb-6 space-y-4">
         <div className="flex items-center gap-2 font-semibold text-sm">
           <Link2 size={15} />
           Your Customer Access
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="flex-1 flex gap-2">
+        <div className="grid gap-3">
+          <div className="flex gap-2 items-center">
             <div className="flex-1 px-3 py-2 bg-muted rounded-md text-xs font-mono truncate">{customerLink}</div>
-            <button
-              onClick={copyLink}
-              className="shrink-0 px-3 py-2 border rounded-md text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
-            >
+            <button onClick={() => copyText(customerLink, "Link copied!")} className="shrink-0 px-3 py-2 border rounded-md text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5">
               <Copy size={12} /> Copy link
+            </button>
+          </div>
+          <div className="flex gap-2 items-center">
+            <div className="flex-1 px-3 py-2 bg-muted rounded-md text-xs font-mono truncate">{qrLink}</div>
+            <button onClick={() => copyText(qrLink, "QR link copied!")} className="shrink-0 px-3 py-2 border rounded-md text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5">
+              <QrCode size={12} /> Copy QR/share link
             </button>
           </div>
         </div>
@@ -125,12 +126,12 @@ function SetupForm() {
           <div className="text-xs text-muted-foreground">Business code:</div>
           <div className="flex items-center gap-2">
             <span className="font-mono font-bold text-sm tracking-widest px-2.5 py-1 rounded-md" style={theme.accentStyle}>{bizCode}</span>
-            <button onClick={copyCode} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <button onClick={() => copyText(bizCode, "Code copied!")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               <Copy size={12} />
             </button>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">Share this link or code with your customers so they can order from you.</p>
+        <p className="text-xs text-muted-foreground">Share the link, QR link, or business code with your customers so they can order from you.</p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
@@ -188,7 +189,6 @@ function SetupForm() {
           </div>
         </div>
 
-        {/* Theme color picker */}
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Palette size={16} />
@@ -217,7 +217,6 @@ function SetupForm() {
           </div>
         </div>
 
-        {/* Live preview */}
         <div className="rounded-xl border bg-card p-5 space-y-3">
           <p className="text-sm text-muted-foreground font-medium">Customer preview</p>
           <div className="rounded-lg border overflow-hidden" style={theme.heroStyle}>
