@@ -37,34 +37,32 @@ function BusinessRoute({ component: Component }: { component: ComponentType }) {
 
 function Router() {
   return (
-    <AppLayout>
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/login/:role" component={Login} />
-        <Route path="/customer/home">
-          <CustomerRoute component={CustomerHome} />
-        </Route>
-        <Route path="/place-order">
-          <CustomerRoute component={PlaceOrder} />
-        </Route>
-        <Route path="/my-orders">
-          <CustomerRoute component={MyOrders} />
-        </Route>
-        <Route path="/dashboard">
-          <BusinessRoute component={Dashboard} />
-        </Route>
-        <Route path="/inventory">
-          <BusinessRoute component={Inventory} />
-        </Route>
-        <Route path="/orders">
-          <BusinessRoute component={Orders} />
-        </Route>
-        <Route path="/setup-business">
-          <BusinessRoute component={SetupBusiness} />
-        </Route>
-        <Route component={NotFound} />
-      </Switch>
-    </AppLayout>
+    <Switch>
+      <Route path="/" component={Landing} />
+      <Route path="/login/:role" component={Login} />
+      <Route path="/customer/home">
+        <CustomerRoute component={CustomerHome} />
+      </Route>
+      <Route path="/place-order">
+        <CustomerRoute component={PlaceOrder} />
+      </Route>
+      <Route path="/my-orders">
+        <CustomerRoute component={MyOrders} />
+      </Route>
+      <Route path="/dashboard">
+        <BusinessRoute component={Dashboard} />
+      </Route>
+      <Route path="/inventory">
+        <BusinessRoute component={Inventory} />
+      </Route>
+      <Route path="/orders">
+        <BusinessRoute component={Orders} />
+      </Route>
+      <Route path="/setup-business">
+        <BusinessRoute component={SetupBusiness} />
+      </Route>
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
@@ -77,7 +75,9 @@ function App() {
             <RoleProvider>
               <AdminKeyProvider>
                 <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "") }>
-                  <Router />
+                  <AppLayout>
+                    <Router />
+                  </AppLayout>
                 </WouterRouter>
                 <Toaster />
               </AdminKeyProvider>
